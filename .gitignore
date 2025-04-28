@@ -10,11 +10,9 @@ __pycache__/
 .DS_Store
 
 # Project specific
-*.csv
 # cert/
 *.pem
 *.log
-.env
 draft.ipynb
 
 # Jupyter Notebook
