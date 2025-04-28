@@ -21,7 +21,7 @@ EXTENDED_MODEL_URL = os.getenv("extended_model_url")
 OPENAI_API_KEY = os.getenv("OPEN_AI_API_KEY")
 
 # Path to data file (relative to project root)
-DATA_PATH = os.path.join("data", "X_oot.csv")
+DATA_PATH = os.path.join("data", "data_for_model.csv")
 
 # OpenAI setup
 client = openai.OpenAI(api_key=OPENAI_API_KEY)

@@ -1,6 +1,7 @@
 import time
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 import streamlit as st
@@ -31,6 +32,11 @@ if st.button("Analyze All Clients"):
             # Create DataFrame for better visualization
             df = pd.DataFrame(results)
 
+            # Add decile column
+            df["decile"] = pd.qcut(
+                df["probability"], q=10, labels=[f"Decile {i + 1}" for i in range(10)]
+            )
+
             # Display statistics
             st.subheader("Analysis Statistics")
             col1, col2, col3, col4 = st.columns(4)
@@ -45,11 +51,36 @@ if st.button("Analyze All Clients"):
 
             # Display distribution
             st.subheader("Probability Distribution")
-            fig, ax = plt.subplots()
-            sns.histplot(data=df, x="probability", bins=20, ax=ax)
-            ax.set_xlabel("Probability")
-            ax.set_ylabel("Number of Clients")
-            st.pyplot(fig)
+            col1, col2 = st.columns(2)
+
+            with col1:
+                # Histogram
+                fig1, ax1 = plt.subplots()
+                sns.histplot(data=df, x="probability", bins=20, ax=ax1)
+                ax1.set_xlabel("Probability")
+                ax1.set_ylabel("Number of Clients")
+                st.pyplot(fig1)
+
+            with col2:
+                # Decile boxplot
+                fig2, ax2 = plt.subplots(figsize=(10, 6))
+                sns.boxplot(data=df, x="decile", y="probability", ax=ax2)
+                ax2.set_xlabel("Decile")
+                ax2.set_ylabel("Probability")
+                ax2.set_title("Probability Distribution by Decile")
+                plt.xticks(rotation=45)
+                st.pyplot(fig2)
+
+            # Display decile statistics
+            st.subheader("Decile Statistics")
+            decile_stats = (
+                df.groupby("decile")["probability"]
+                .agg(["mean", "median", "count"])
+                .round(4)
+            )
+            decile_stats["mean"] = decile_stats["mean"].map("{:.2%}".format)
+            decile_stats["median"] = decile_stats["median"].map("{:.2%}".format)
+            st.dataframe(decile_stats)
 
             # Display top and bottom clients
             st.subheader("Client Analysis")
