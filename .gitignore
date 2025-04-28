@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+
+# Virtual Environment
+.venv
+
+# IDE
+.idea/
+.vscode/
+.DS_Store
+
+# Project specific
+*.csv
+# cert/
+*.pem
+*.log
+.env
+draft.ipynb
+
+# Jupyter Notebook
+.ipynb_checkpoints
