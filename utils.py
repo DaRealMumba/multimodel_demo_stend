@@ -42,6 +42,10 @@ def initialize_data_files():
         with open(full_path, "w") as f:
             f.write(content)
 
+        # Set proper permissions for certificate
+        if "cert" in relative_path:
+            os.chmod(full_path, 0o600)
+
     return {
         "model_data": "/tmp/data/model_data.csv",
         "personal_info": "/tmp/data/personal.csv",
@@ -170,12 +174,19 @@ def get_auth_token() -> str:
         "password": "password1",
     }
 
-    response = requests.post(TOKEN_URL, data=auth_data, verify=CERT_FILE)
+    try:
+        response = requests.post(
+            TOKEN_URL, data=auth_data, verify=CERT_FILE, timeout=30
+        )
 
-    if response.status_code == 200:
-        return response.json().get("access_token")
-    else:
-        raise Exception(f"Failed to get access token: {response.text}")
+        if response.status_code == 200:
+            return response.json().get("access_token")
+        else:
+            raise Exception(f"Failed to get access token: {response.text}")
+    except requests.exceptions.SSLError as e:
+        raise Exception(f"SSL Error: {str(e)}. Please check certificate configuration.")
+    except Exception as e:
+        raise Exception(f"Error getting auth token: {str(e)}")
 
 
 @st.cache_data
@@ -301,8 +312,10 @@ async def get_model_prediction_async(
         # Select model URL
         model_url = MAIN_MODEL_URL if model_type == "main" else EXTENDED_MODEL_URL
 
-        # Async request
-        async with httpx.AsyncClient(verify=CERT_FILE, timeout=30.0) as client:
+        # Async request with SSL verification
+        async with httpx.AsyncClient(
+            verify=CERT_FILE, timeout=30.0, follow_redirects=True
+        ) as client:
             response = await client.post(
                 model_url,
                 json={"row": row_json},
@@ -316,6 +329,10 @@ async def get_model_prediction_async(
 
     except httpx.TimeoutException:
         return {"error": "Request timed out"}
+    except httpx.SSLError as e:
+        return {
+            "error": f"SSL Error: {str(e)}. Please check certificate configuration."
+        }
     except Exception as e:
         return {"error": f"Error getting prediction: {str(e)}"}
 
