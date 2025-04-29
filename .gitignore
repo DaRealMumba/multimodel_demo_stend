@@ -17,6 +17,7 @@ data/
 draft.ipynb
 .streamlit/secrets.toml
 .devcontainer/
+cert/
 
 # Jupyter Notebook
 .ipynb_checkpoints
