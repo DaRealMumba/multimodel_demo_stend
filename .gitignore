@@ -15,7 +15,7 @@ __pycache__/
 *.pem
 *.log
 draft.ipynb
-.streamlit/secrets.toml
+*secrets.toml
 
 # Jupyter Notebook
 .ipynb_checkpoints
