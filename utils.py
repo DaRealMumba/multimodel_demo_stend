@@ -22,13 +22,6 @@ MAIN_MODEL_URL = os.getenv("main_model_url") or st.secrets["main_model_url"]
 EXTENDED_MODEL_URL = os.getenv("extended_model_url") or st.secrets["extended_model_url"]
 OPENAI_API_KEY = os.getenv("OPEN_AI_API_KEY") or st.secrets["OPEN_AI_API_KEY"]
 
-# cert_path = "/tmp/model_cert.pem"
-# with open(cert_path, "w") as f:
-#     f.write(CERT_FILE)
-
-# Path to data file (relative to project root)
-# DATA_PATH = os.path.join("data", "data_for_model.csv")
-# PERSONAL_INFO_PATH = os.path.join("data", "personal_info.csv")
 
 # OpenAI setup
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
@@ -39,9 +32,10 @@ def initialize_data_files():
     files_to_create = {
         "data/model_data.csv": st.secrets["data"],
         "data/personal.csv": st.secrets["personal_info"],
+        "cert/model_cert.pem": st.secrets["cert_file"],
     }
 
-    # Create /tmp/data directory and write files
+    # Create directories and write files
     for relative_path, content in files_to_create.items():
         full_path = os.path.join("/tmp", relative_path)
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
@@ -51,6 +45,7 @@ def initialize_data_files():
     return {
         "model_data": "/tmp/data/model_data.csv",
         "personal_info": "/tmp/data/personal.csv",
+        "cert_file": "/tmp/cert/model_cert.pem",
     }
 
 
@@ -58,6 +53,7 @@ def initialize_data_files():
 data_paths = initialize_data_files()
 DATA_PATH = data_paths["model_data"]
 PERSONAL_INFO_PATH = data_paths["personal_info"]
+CERT_FILE = data_paths["cert_file"]
 
 
 # Чтение CSV
