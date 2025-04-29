@@ -27,8 +27,21 @@ OPENAI_API_KEY = os.getenv("OPEN_AI_API_KEY") or st.secrets["OPEN_AI_API_KEY"]
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
 
 
-def initialize_data_files():
-    """Initialize data files from Streamlit secrets"""
+def initialize_data_files() -> Dict[str, str]:
+    """Initialize data files from Streamlit secrets and create necessary directories.
+
+    Creates temporary files for model data, personal info, and certificate from secrets.
+    Sets appropriate permissions for sensitive files.
+
+    Returns:
+        Dict[str, str]: Dictionary containing paths to created files:
+            - model_data: Path to model data CSV
+            - personal_info: Path to personal info CSV
+            - cert_file: Path to certificate file
+
+    Raises:
+        Exception: If there's an error creating files or directories.
+    """
     files_to_create = {
         "data/model_data.csv": st.secrets["data"],
         "data/personal.csv": st.secrets["personal_info"],
@@ -60,17 +73,21 @@ PERSONAL_INFO_PATH = data_paths["personal_info"]
 CERT_FILE = data_paths["cert_file"]
 
 
-# Чтение CSV
 @st.cache_data
 def load_data(filepath: str, delimiter: str = ",") -> pd.DataFrame:
-    """Load data from CSV file
+    """Load data from CSV file.
 
     Args:
-        filepath (str): Path to the CSV file
+        filepath (str): Path to the CSV file.
         delimiter (str, optional): Delimiter used in the CSV file. Defaults to ",".
 
     Returns:
-        pd.DataFrame: Loaded data
+        pd.DataFrame: Loaded data as pandas DataFrame.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+        pd.errors.EmptyDataError: If the file is empty.
+        pd.errors.ParserError: If there's an error parsing the file.
     """
     return pd.read_csv(filepath, delimiter=delimiter)
 
@@ -82,11 +99,16 @@ json_data = load_data(PERSONAL_INFO_PATH, delimiter=";")
 
 @st.cache_data
 def get_available_client_ids() -> List[int]:
-    """
-    Get list of available client IDs from CSV file.
+    """Get list of available client IDs from the model data file.
 
     Returns:
-        List[int]: List of client IDs (indices)
+        List[int]: Sorted list of available client IDs.
+
+    Raises:
+        FileNotFoundError: If model data file is not found.
+        pd.errors.EmptyDataError: If model data file is empty.
+        pd.errors.ParserError: If there's an error parsing the model data file.
+        Exception: For any other errors during the process.
     """
     try:
         clients_df = load_data(DATA_PATH)
@@ -103,14 +125,20 @@ def get_available_client_ids() -> List[int]:
 
 @st.cache_data
 def get_personal_info(client_id: int) -> Optional[pd.DataFrame]:
-    """
-    Get personal information for a client from personal_info.csv.
+    """Get personal information for a client from personal_info.csv.
 
     Args:
-        client_id (int): Client ID (index)
+        client_id (int): Client ID (index) to retrieve information for.
 
     Returns:
-        Optional[pd.DataFrame]: DataFrame with personal info or None if client not found
+        Optional[pd.DataFrame]: DataFrame containing client's personal information if found,
+            None if client not found.
+
+    Raises:
+        FileNotFoundError: If personal info file is not found.
+        pd.errors.EmptyDataError: If personal info file is empty.
+        pd.errors.ParserError: If there's an error parsing the personal info file.
+        Exception: For any other errors during the process.
     """
     try:
         # Load personal info data
@@ -133,14 +161,20 @@ def get_personal_info(client_id: int) -> Optional[pd.DataFrame]:
 
 @st.cache_data
 def get_client_data(client_id: int) -> Optional[pd.DataFrame]:
-    """
-    Get client data by ID (index).
+    """Get client data by ID from the model data file.
 
     Args:
-        client_id (int): Client ID (index)
+        client_id (int): Client ID (index) to retrieve data for.
 
     Returns:
-        Optional[pd.DataFrame]: DataFrame with client data or None if client not found
+        Optional[pd.DataFrame]: DataFrame containing client's model data if found,
+            None if client not found.
+
+    Raises:
+        FileNotFoundError: If model data file is not found.
+        pd.errors.EmptyDataError: If model data file is empty.
+        pd.errors.ParserError: If there's an error parsing the model data file.
+        Exception: For any other errors during the process.
     """
     try:
         # Load data
@@ -161,13 +195,15 @@ def get_client_data(client_id: int) -> Optional[pd.DataFrame]:
         raise Exception(f"Error getting client data: {str(e)}")
 
 
-@st.cache_data(ttl=3600)  # Cache token for 1 hour
+@st.cache_data(ttl=3600)
 def get_auth_token() -> str:
-    """
-    Get authorization token.
+    """Get authorization token for API access.
 
     Returns:
-        str: Access token
+        str: Access token for API authentication.
+
+    Raises:
+        Exception: If failed to get access token or encountered SSL error.
     """
     auth_data = {
         "username": "user1",
@@ -191,15 +227,18 @@ def get_auth_token() -> str:
 
 @st.cache_data
 def get_model_prediction(client_id: int, model_type: str = "main") -> Dict[str, Any]:
-    """
-    Get model prediction for client.
+    """Get model prediction for a client.
 
     Args:
-        client_id (int): Client ID (index)
-        model_type (str): Type of model to use ("main" or "extended")
+        client_id (int): Client ID to get prediction for.
+        model_type (str, optional): Type of model to use ("main" or "extended").
+            Defaults to "main".
 
     Returns:
-        Dict[str, Any]: Model prediction result
+        Dict[str, Any]: Model prediction result containing probability score.
+
+    Raises:
+        Exception: If there's an error getting the prediction.
     """
     try:
         # Get client data
@@ -248,14 +287,16 @@ def get_model_prediction(client_id: int, model_type: str = "main") -> Dict[str, 
 
 @st.cache_data
 def generate_email(prompt: str) -> str:
-    """
-    Generate email text using GPT.
+    """Generate email text using GPT model.
 
     Args:
-        prompt (str): Email generation prompt
+        prompt (str): Prompt for email generation.
 
     Returns:
-        str: Generated email text
+        str: Generated email text.
+
+    Raises:
+        Exception: If there's an error generating the email.
     """
     try:
         response = client.chat.completions.create(
@@ -283,16 +324,18 @@ def generate_email(prompt: str) -> str:
 async def get_model_prediction_async(
     client_id: int, model_type: str, token: str
 ) -> Dict[str, Any]:
-    """
-    Async version of get_model_prediction.
+    """Get model prediction asynchronously.
 
     Args:
-        client_id (int): Client ID (index)
-        model_type (str): Type of model to use ("main" or "extended")
-        token (str): Authorization token
+        client_id (int): Client ID to get prediction for.
+        model_type (str): Type of model to use ("main" or "extended").
+        token (str): Authorization token for API access.
 
     Returns:
-        Dict[str, Any]: Model prediction result
+        Dict[str, Any]: Model prediction result containing probability score.
+
+    Raises:
+        Exception: If there's an error getting the prediction or SSL error occurs.
     """
     try:
         # Get client data
@@ -339,14 +382,17 @@ async def get_model_prediction_async(
 
 @st.cache_data
 def analyze_all_probabilities(model_type: str = "main") -> List[Dict[str, Any]]:
-    """
-    Analyze probabilities for all clients using specified model.
+    """Analyze probabilities for all clients using specified model.
 
     Args:
-        model_type (str): Type of model to use ("main" or "extended")
+        model_type (str, optional): Type of model to use ("main" or "extended").
+            Defaults to "main".
 
     Returns:
-        List[Dict[str, Any]]: List of dictionaries with client IDs and probabilities
+        List[Dict[str, Any]]: List of dictionaries containing client IDs and probabilities.
+
+    Raises:
+        Exception: If there's an error analyzing probabilities.
     """
     try:
         # Get list of all client IDs and token
