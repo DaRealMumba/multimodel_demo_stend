@@ -16,12 +16,18 @@ try:
 except:
     pass
 
+# Создаем временный файл сертификата
+
 # Get configuration from environment variables or Streamlit secrets
 CERT_FILE = os.getenv("cert_file") or st.secrets["cert_file"]
 TOKEN_URL = os.getenv("token_url") or st.secrets["token_url"]
 MAIN_MODEL_URL = os.getenv("main_model_url") or st.secrets["main_model_url"]
 EXTENDED_MODEL_URL = os.getenv("extended_model_url") or st.secrets["extended_model_url"]
 OPENAI_API_KEY = os.getenv("OPEN_AI_API_KEY") or st.secrets["OPEN_AI_API_KEY"]
+
+cert_path = "/tmp/model_cert.pem"
+with open(cert_path, "w") as f:
+    f.write(CERT_FILE)
 
 # Path to data file (relative to project root)
 DATA_PATH = os.path.join("data", "data_for_model.csv")
