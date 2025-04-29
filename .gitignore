@@ -10,12 +10,12 @@ __pycache__/
 .DS_Store
 
 # Project specific
-# cert/
+data/
 .env
 *.pem
 *.log
 draft.ipynb
-*secrets.toml
+.streamlit/secrets.toml
 
 # Jupyter Notebook
 .ipynb_checkpoints

@@ -1,4 +1,3 @@
-import pandas as pd
 import streamlit as st
 
 import utils
@@ -42,18 +41,18 @@ except Exception as e:
 
 # Show remaining content only if ID is selected
 if client_id is not None:
-    # Show client data
-    st.header("Client Data")
-    client_data = utils.get_client_data(client_id)
-    if client_data is not None:
-        st.dataframe(client_data)
+    # Show personal info
+    st.header("Client Personal Information")
+    personal_info = utils.get_personal_info(client_id)
+    if personal_info is not None:
+        st.dataframe(personal_info)
     else:
-        st.error(f"Client with ID {client_id} not found")
+        st.error(f"Personal information for client ID {client_id} not found")
 
     # Button to get prediction
     if st.button("Get Prediction"):
         with st.spinner("Getting prediction..."):
-            # Get prediction
+            # Get prediction using data_for_model.csv
             result = utils.get_model_prediction(client_id)
 
             if "error" in result:
@@ -64,7 +63,9 @@ if client_id is not None:
                 if "Probability" in result:
                     probability = round(result["Probability"], 2)
                     st.session_state["probability"] = probability
-                    st.session_state["client_data"] = client_data
+                    st.session_state["client_data"] = (
+                        personal_info  # Store personal info instead of model data
+                    )
                     st.session_state["show_prediction"] = True
                 else:
                     st.json(result)

@@ -1,6 +1,5 @@
 import asyncio
 import os
-from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Optional
 
 import httpx
@@ -13,10 +12,8 @@ from dotenv import load_dotenv
 # Try to load from .env file first, then fall back to Streamlit secrets
 try:
     load_dotenv()
-except:
+except ImportError:
     pass
-
-# Создаем временный файл сертификата
 
 # Get configuration from environment variables or Streamlit secrets
 CERT_FILE = os.getenv("cert_file") or st.secrets["cert_file"]
@@ -25,15 +22,62 @@ MAIN_MODEL_URL = os.getenv("main_model_url") or st.secrets["main_model_url"]
 EXTENDED_MODEL_URL = os.getenv("extended_model_url") or st.secrets["extended_model_url"]
 OPENAI_API_KEY = os.getenv("OPEN_AI_API_KEY") or st.secrets["OPEN_AI_API_KEY"]
 
-cert_path = "/tmp/model_cert.pem"
-with open(cert_path, "w") as f:
-    f.write(CERT_FILE)
+# cert_path = "/tmp/model_cert.pem"
+# with open(cert_path, "w") as f:
+#     f.write(CERT_FILE)
 
 # Path to data file (relative to project root)
-DATA_PATH = os.path.join("data", "data_for_model.csv")
+# DATA_PATH = os.path.join("data", "data_for_model.csv")
+# PERSONAL_INFO_PATH = os.path.join("data", "personal_info.csv")
 
 # OpenAI setup
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
+
+
+def initialize_data_files():
+    """Initialize data files from Streamlit secrets"""
+    files_to_create = {
+        "data/model_data.csv": st.secrets["data"],
+        "data/personal.csv": st.secrets["personal_info"],
+    }
+
+    # Create /tmp/data directory and write files
+    for relative_path, content in files_to_create.items():
+        full_path = os.path.join("/tmp", relative_path)
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        with open(full_path, "w") as f:
+            f.write(content)
+
+    return {
+        "model_data": "/tmp/data/model_data.csv",
+        "personal_info": "/tmp/data/personal.csv",
+    }
+
+
+# Initialize data files and get paths
+data_paths = initialize_data_files()
+DATA_PATH = data_paths["model_data"]
+PERSONAL_INFO_PATH = data_paths["personal_info"]
+
+
+# Чтение CSV
+@st.cache_data
+def load_data(filepath: str, delimiter: str = ",") -> pd.DataFrame:
+    """Load data from CSV file
+
+    Args:
+        filepath (str): Path to the CSV file
+        delimiter (str, optional): Delimiter used in the CSV file. Defaults to ",".
+
+    Returns:
+        pd.DataFrame: Loaded data
+    """
+    return pd.read_csv(filepath, delimiter=delimiter)
+
+
+# Load data
+csv_data = load_data(DATA_PATH)
+json_data = load_data(PERSONAL_INFO_PATH, delimiter=";")
 
 
 @st.cache_data
@@ -45,12 +89,46 @@ def get_available_client_ids() -> List[int]:
         List[int]: List of client IDs (indices)
     """
     try:
-        clients_df = pd.read_csv(DATA_PATH)
+        clients_df = load_data(DATA_PATH)
         return sorted(clients_df.index.tolist())
     except FileNotFoundError:
         raise Exception("Client data file not found")
+    except pd.errors.EmptyDataError:
+        raise Exception("Client data file is empty")
+    except pd.errors.ParserError:
+        raise Exception("Error parsing client data file")
     except Exception as e:
         raise Exception(f"Error getting client list: {str(e)}")
+
+
+@st.cache_data
+def get_personal_info(client_id: int) -> Optional[pd.DataFrame]:
+    """
+    Get personal information for a client from personal_info.csv.
+
+    Args:
+        client_id (int): Client ID (index)
+
+    Returns:
+        Optional[pd.DataFrame]: DataFrame with personal info or None if client not found
+    """
+    try:
+        # Load personal info data
+        personal_info_df = load_data(PERSONAL_INFO_PATH, delimiter=";")
+
+        # Get specific client data by index
+        if client_id in personal_info_df.index:
+            return personal_info_df.loc[[client_id]]
+        return None
+
+    except FileNotFoundError:
+        raise Exception("Personal info file not found")
+    except pd.errors.EmptyDataError:
+        raise Exception("Personal info file is empty")
+    except pd.errors.ParserError:
+        raise Exception("Error parsing personal info file")
+    except Exception as e:
+        raise Exception(f"Error getting personal info: {str(e)}")
 
 
 @st.cache_data
@@ -66,7 +144,7 @@ def get_client_data(client_id: int) -> Optional[pd.DataFrame]:
     """
     try:
         # Load data
-        clients_df = pd.read_csv(DATA_PATH)
+        clients_df = load_data(DATA_PATH)
 
         # Get specific client data by index
         if client_id in clients_df.index:
@@ -75,6 +153,10 @@ def get_client_data(client_id: int) -> Optional[pd.DataFrame]:
 
     except FileNotFoundError:
         raise Exception("Client data file not found")
+    except pd.errors.EmptyDataError:
+        raise Exception("Client data file is empty")
+    except pd.errors.ParserError:
+        raise Exception("Error parsing client data file")
     except Exception as e:
         raise Exception(f"Error getting client data: {str(e)}")
 
