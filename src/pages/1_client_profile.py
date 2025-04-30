@@ -45,7 +45,9 @@ if client_id is not None:
     st.header("Client Personal Information")
     personal_info = utils.get_personal_info(client_id)
     if personal_info is not None:
-        st.dataframe(personal_info)
+        # Transpose the DataFrame for vertical display
+        personal_info_transposed = personal_info.T
+        st.dataframe(personal_info_transposed)
     else:
         st.error(f"Personal information for client ID {client_id} not found")
 
