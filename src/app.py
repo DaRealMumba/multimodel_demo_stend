@@ -2,30 +2,46 @@ import streamlit as st
 
 # Page configuration
 st.set_page_config(
-    page_title="Multimodel Demo",
+    page_title="AI for Personalized Marketing",
     page_icon="🤖",
-    layout="wide",
+    layout="centered",
     initial_sidebar_state="expanded",
 )
 
 # Application header
-st.title("Multimodel Demo Application")
+st.title("🤖 AI for Real-Time Personalized Marketing")
 
-# Page descriptions
-st.markdown("""
-### Available Pages:
-
-#### Client Profile
-- Enter a client ID to view detailed client information
-- Get AI-powered predictions for client communication strategy
-- Receive recommendations for optimal communication channels (email/phone)
-- In case it's an email strategy, generate personalized email templates based on client profile
-
-#### Portfolio Analysis
-- View overall portfolio statistics and metrics
-- Analyze client distribution and segmentation
-- Get insights into communication channel effectiveness
-- Monitor model performance across different client segments
+# Content
+st.header("Problem:")
+st.write("""
+- 🚀 Marketers manually segment audiences for weeks
+- ✅ Only 2–3 hypotheses tested instead of hundreds
+- ❌ Customers receive irrelevant offers
+- 💸 ML solutions are complex and expensive
+- 📉 Result: low conversion, high CAC, wasted budget
 """)
 
-st.write("Select a page from the sidebar menu to continue.")
+st.header("Our Solution:")
+st.write("""
+- 📈 Real-time personalization
+- 🔄 Automated hypothesis testing
+- 🔗 Simple REST API
+- 👥 No ML team required
+""")
+
+st.header("For:")
+st.write("""
+- 👨‍💼 Marketing teams
+- 👩‍💻 CRM specialists
+- 👨‍🔧 Developers
+""")
+
+st.header("Results:")
+st.write("""
+- 📊 +30–50% conversion uplift
+- 💰 –20% CAC
+- 🚀 ROI growth from month one
+""")
+
+# Call to action
+st.button("Request a demo")
