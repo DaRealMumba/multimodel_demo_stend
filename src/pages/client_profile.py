@@ -1,6 +1,11 @@
 import streamlit as st
 
-import utils
+from utils import (
+    generate_email,
+    get_available_client_ids,
+    get_model_prediction,
+    get_personal_info,
+)
 
 # Application header
 st.title("Client Profile")
@@ -9,7 +14,7 @@ st.title("Client Profile")
 # Client ID selection
 try:
     # Get list of available client IDs
-    client_ids = utils.get_available_client_ids()
+    client_ids = get_available_client_ids()
 
     if not client_ids:
         st.error("No clients available in the database")
@@ -43,7 +48,7 @@ except Exception as e:
 if client_id is not None:
     # Show personal info
     st.header("Client Personal Information")
-    personal_info = utils.get_personal_info(client_id)
+    personal_info = get_personal_info(client_id)
     if personal_info is not None:
         # Transpose the DataFrame for vertical display
         personal_info_transposed = personal_info.T
@@ -55,7 +60,7 @@ if client_id is not None:
     if st.button("Get Prediction"):
         with st.spinner("Getting prediction..."):
             # Get prediction using data_for_model.csv
-            result = utils.get_model_prediction(client_id)
+            result = get_model_prediction(client_id)
 
             if "error" in result:
                 st.error(result["error"])
@@ -108,7 +113,7 @@ The email should be persuasive but not pushy."""
             if st.button("Generate Email"):
                 if prompt:
                     with st.spinner("Generating email..."):
-                        email_text = utils.generate_email(prompt)
+                        email_text = generate_email(prompt)
                         st.text_area("Generated Email", email_text, height=300)
                 else:
                     st.warning("Please enter a prompt for email generation")

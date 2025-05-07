@@ -5,7 +5,7 @@ import pandas as pd
 import seaborn as sns
 import streamlit as st
 
-import utils
+from utils import analyze_all_probabilities
 
 st.title("Portfolio Analysis")
 
@@ -22,7 +22,7 @@ if st.button("Analyze All Clients"):
     start_time = time.time()
     with st.spinner("Analyzing all clients..."):
         # Get analysis results
-        results = utils.analyze_all_probabilities(model_type)
+        results = analyze_all_probabilities(model_type)
         execution_time = time.time() - start_time
 
         if not results:
